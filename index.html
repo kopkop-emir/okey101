@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="101 Okey">
@@ -15,7 +15,9 @@
     --green:#1f5d45; --green2:#2c7a5c; --line:#e2dccd;
     --pos:#b8372f; --gold:#f3c94a;
   }
-  *{box-sizing:border-box}
+  *{box-sizing:border-box;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  tr.more td{background:#eef6f0;color:var(--green);font-weight:600;padding:12px 6px;cursor:pointer;border-radius:8px}
+  tr.more td:active{background:#dcebe1}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.4}
   .wrap{max-width:960px;margin:0 auto;padding:16px}
   header.top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px;flex-wrap:wrap}
@@ -234,20 +236,31 @@ function setMode(m){
 function startGame(){
   S.hands = Math.min(99, Math.max(1, num($('setHands').value) || 30));
   names().forEach((n,i)=>{ if(!n.trim()) names()[i] = (S.mode==='pair'?'Takım ':'Oyuncu ') + (i+1); });
-  S.started = true; ensure(); save(); renderGame();
+  S.started = true; resetView(); ensure(); save(); renderGame();
 }
 function newGame(){
-  const apply = () => { S.started = false; S.scores = []; S.pens = [[],[],[],[]]; save(); renderSetup(); };
+  const apply = () => { S.started = false; S.scores = []; S.pens = [[],[],[],[]]; resetView(); save(); renderSetup(); };
   if (hasData()) ask('Kaydedilmemiş puanlar silinecek ve yeni oyun başlayacak. Devam edilsin mi? (Önce "Oyunu Bitir ve Kaydet" ile geçmişe ekleyebilirsin.)', 'Yeni oyun', apply, true);
   else apply();
 }
 
 /* ---------- GAME ---------- */
+let showAll = false, hiEnd = -1;
+function toggleHands(){ showAll = !showAll; renderGame(); }
+function resetView(){ showAll = false; hiEnd = -1; }
 function renderGame(){
   ensure();
   const n = cols(), nm = names();
   let rows = '';
-  for (let i = 0; i < S.hands; i++){
+  // Varsayılan görünüm: son 5 el. Önceki eller tek satırda toplu, tıklayınca açılır.
+  let L = -1;
+  for (let i = 0; i < S.hands; i++) if (rowFilled(i)) L = i;
+  const cur = Math.min(L + 1, S.hands - 1);
+  const hi = showAll ? S.hands - 1 : Math.min(S.hands - 1, Math.max(cur, hiEnd));
+  const lo = showAll ? 0 : Math.max(0, hi - 4);
+  if (showAll && S.hands > 5) rows += `<tr class="more"><td colspan="${n+1}" onclick="toggleHands()">▼ Eski elleri gizle</td></tr>`;
+  else if (lo > 0) rows += `<tr class="more"><td colspan="${n+1}" onclick="toggleHands()">▲ Önceki ${lo} eli göster</td></tr>`;
+  for (let i = lo; i <= hi; i++){
     rows += `<tr id="r-${i}" class="${rowFilled(i)?'done':''}"><td class="lbl">${i+1}. El</td>` +
       Array.from({length:n}, (_,c)=>`<td><input type="text" class="num" id="s-${i}-${c}" value="${esc(S.scores[i][c])}" inputmode="none" autocomplete="off" ${COARSE?'readonly':''}
         oninput="this.value=clean(this.value);setScore(${i},${c},this.value)" onkeydown="keyNav(event,${i},${c})"></td>`).join('') + '</tr>';
@@ -324,9 +337,12 @@ function goCell(el){ if (el){ el.focus(); if (!COARSE) el.select(); } }
 // Enter: önce yana, satır sonunda bir alt satırın ilk kutusuna
 function navNext(i, c){
   const n = cols();
-  const nx = c + 1 < n ? $(`s-${i}-${c+1}`) : $(`s-${i+1}-0`);
-  if (nx) goCell(nx); else if (document.activeElement) document.activeElement.blur();
-  return !!nx;
+  const ni = c + 1 < n ? i : i + 1, nc = c + 1 < n ? c + 1 : 0;
+  if (ni >= S.hands){ if (document.activeElement) document.activeElement.blur(); return false; }
+  let nx = $(`s-${ni}-${nc}`);
+  if (!nx){ hiEnd = Math.max(hiEnd, ni); renderGame(); nx = $(`s-${ni}-${nc}`); } // gizli eli aç
+  if (nx){ goCell(nx); return true; }
+  return false;
 }
 function keyNav(e, i, c){
   if (e.key === 'Enter'){ e.preventDefault(); navNext(i, c); }
@@ -435,7 +451,7 @@ function doSave(){
     names: names().slice(0, n).slice(), hands: S.hands, played, scores, pens, tot
   });
   if (ghOn()) S.pendAdd.push(S.history[0]);
-  S.started = false; S.scores = []; S.pens = [[],[],[],[]];
+  S.started = false; S.scores = []; S.pens = [[],[],[],[]]; resetView();
   save(); renderHistory();
 }
 function winnersText(g){
