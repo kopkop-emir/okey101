@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="101 Okey">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#1f5d45">
+<title>101 Okey Hesap</title>
+<style>
+  :root{
+    --bg:#f3efe6; --card:#fffdf8; --ink:#222; --muted:#7a7468;
+    --green:#1f5d45; --green2:#2c7a5c; --line:#e2dccd;
+    --pos:#b8372f; --gold:#f3c94a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.4}
+  .wrap{max-width:960px;margin:0 auto;padding:16px}
+  header.top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  h1{margin:0;font-size:22px;color:var(--green)}
+  h2{margin:0 0 10px;font-size:17px;color:var(--green)}
+  .btn{border:1px solid var(--line);background:#fff;color:var(--ink);padding:8px 14px;border-radius:10px;cursor:pointer;font-size:14px}
+  .btn:hover{background:#f6f2e8}
+  .btn.primary{background:var(--green);border-color:var(--green);color:#fff;font-weight:600}
+  .btn.primary:hover{background:var(--green2)}
+  .btn.danger{color:var(--pos)}
+  .btn.dangerfill{background:var(--pos);border-color:var(--pos);color:#fff;font-weight:600}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  input[type=text],input[type=number]{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;width:100%}
+  input:focus{outline:2px solid var(--green2);outline-offset:0}
+
+  /* modal */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
+  .modal .box{background:#fff;border-radius:14px;padding:20px;max-width:380px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+  .modal p{margin:0 0 16px;font-size:16px}
+  .modal .acts{display:flex;gap:8px;justify-content:flex-end}
+
+  /* setup */
+  .seg{display:inline-flex;border:1px solid var(--green);border-radius:10px;overflow:hidden;margin-bottom:14px}
+  .seg button{border:0;background:#fff;color:var(--green);padding:10px 22px;font-size:15px;cursor:pointer}
+  .seg button.on{background:var(--green);color:#fff;font-weight:600}
+  .names{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px}
+  .names label,.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+  .field{max-width:200px;margin-bottom:16px}
+
+  /* info bar */
+  .info{display:flex;gap:16px;align-items:end;flex-wrap:wrap}
+  .info .field{margin:0;max-width:150px}
+  .stat{font-size:14px;color:var(--muted)}
+  .stat b{display:block;font-size:22px;color:var(--ink)}
+
+  /* summary */
+  .sum{display:grid;gap:10px;margin-bottom:14px}
+  .sum.c2{grid-template-columns:repeat(2,1fr)}
+  .sum.c4{grid-template-columns:repeat(4,1fr)}
+  .sumcard{background:var(--green);color:#fff;border-radius:14px;padding:12px;text-align:center;position:relative;border:3px solid transparent}
+  .sumcard .n{font-size:14px;opacity:.85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sumcard .t{font-size:34px;font-weight:700}
+  .sumcard.lead{border-color:var(--gold)}
+  .sumcard.lead::after{content:"👑";position:absolute;top:4px;right:8px;font-size:16px}
+
+  /* table */
+  .tablewrap{overflow-x:auto}
+  table{border-collapse:collapse;width:100%}
+  th,td{padding:4px 6px;border-bottom:1px solid var(--line);text-align:center}
+  th{background:var(--green);color:#fff;position:sticky;top:0;font-weight:600;font-size:14px;z-index:1}
+  th:first-child{border-top-left-radius:10px}
+  th:last-child{border-top-right-radius:10px}
+  td.lbl{text-align:left;color:var(--muted);font-size:14px;white-space:nowrap;padding-left:10px}
+  td input{text-align:center;padding:6px 4px;font-size:16px}
+  tr.done td.lbl{color:var(--green);font-weight:600}
+  tr.done td input{background:#eef6f0}
+  tr.subtotal td{background:#f4efe2;font-weight:700;padding:10px 6px}
+  tr.grand td{background:var(--green);color:#fff;font-size:20px;font-weight:700;padding:12px 6px}
+  td.ro{padding:8px 6px;font-size:16px}
+  input[type=number]::-webkit-inner-spin-button{opacity:.3}
+
+  /* penalties */
+  .pens{display:grid;gap:12px}
+  .pens.c2{grid-template-columns:repeat(2,1fr)}
+  .pens.c4{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+  .pen{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}
+  .pen h3{margin:0 0 8px;font-size:15px}
+  .penbtn{width:100%;border:0;border-radius:10px;padding:12px 0;font-size:20px;font-weight:700;color:#fff;background:var(--pos);cursor:pointer;margin-bottom:8px}
+  .penbtn:hover{filter:brightness(1.1)}
+  .custom{display:flex;gap:6px;margin-bottom:8px}
+  .custom input{flex:1;min-width:0}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;min-height:28px}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:3px 6px 3px 10px;border-radius:999px;font-weight:700;font-size:14px;color:#fff;background:var(--pos)}
+  .chip.ro{padding:3px 10px}
+  .chip button{border:0;background:rgba(255,255,255,.3);color:#fff;border-radius:50%;width:20px;height:20px;cursor:pointer;line-height:1;padding:0}
+  .pentotal{margin-top:8px;font-size:14px;color:var(--muted)}
+  .pentotal b{color:var(--ink);font-size:16px}
+  .hint{font-size:13px;color:var(--muted);margin-top:8px}
+
+  /* history */
+  .game{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .game .meta{font-size:13px;color:var(--muted)}
+  .game .res{margin-top:4px;font-size:15px}
+  .game .res b{color:var(--green)}
+  .badge{display:inline-block;background:#eef6f0;color:var(--green);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600;margin-left:6px}
+  .empty{color:var(--muted);text-align:center;padding:24px 0}
+
+  @media (max-width:560px){
+    .sum.c4{grid-template-columns:repeat(2,1fr)}
+    .pens.c2{grid-template-columns:1fr}
+    .sumcard .t{font-size:28px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+const KEY = 'okey101-v2';
+const OLD_KEY = 'okey101-v1';
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+const DEFAULT = {
+  started:false, mode:'pair',
+  namesPair:['Takım 1','Takım 2'],
+  namesSingle:['Oyuncu 1','Oyuncu 2','Oyuncu 3','Oyuncu 4'],
+  hands:30, scores:[], pens:[[],[],[],[]], history:[],
+  gh:null, pendAdd:[], pendDel:[]
+};
+let S;
+(function load(){
+  S = JSON.parse(JSON.stringify(DEFAULT));
+  try {
+    const raw = localStorage.getItem(KEY) || localStorage.getItem(OLD_KEY);
+    if (raw) Object.assign(S, JSON.parse(raw));
+  } catch(e){}
+  if (!Array.isArray(S.history)) S.history = [];
+})();
+
+const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} };
+const cols = () => S.mode === 'pair' ? 2 : 4;
+const names = () => S.mode === 'pair' ? S.namesPair : S.namesSingle;
+const num = v => { const n = parseInt(v, 10); return isNaN(n) ? 0 : n; };
+const fmtDate = iso => { try { return new Date(iso).toLocaleString('tr-TR', {dateStyle:'medium', timeStyle:'short'}); } catch(e){ return iso; } };
+
+/* ---------- modal (confirm/alert yerine; önizlemelerde confirm() engellenebiliyor) ---------- */
+function ask(msg, okLabel, cb, danger){
+  const o = document.createElement('div'); o.className = 'modal';
+  o.innerHTML = `<div class="box"><p>${esc(msg)}</p><div class="acts">
+    <button class="btn" id="m-no">Vazgeç</button>
+    <button class="btn ${danger?'dangerfill':'primary'}" id="m-yes">${esc(okLabel)}</button></div></div>`;
+  document.body.appendChild(o);
+  o.querySelector('#m-no').onclick = () => o.remove();
+  o.querySelector('#m-yes').onclick = () => { o.remove(); cb(); };
+}
+function notice(msg){
+  const o = document.createElement('div'); o.className = 'modal';
+  o.innerHTML = `<div class="box"><p>${esc(msg)}</p><div class="acts"><button class="btn primary" id="m-ok">Tamam</button></div></div>`;
+  document.body.appendChild(o);
+  o.querySelector('#m-ok').onclick = () => o.remove();
+}
+
+function ensure(){
+  while (S.scores.length < S.hands) S.scores.push(['','','','']);
+  while (S.pens.length < 4) S.pens.push([]);
+}
+function hasData(){
+  return S.scores.some(r => r.some(v => v !== '')) || S.pens.some(p => p.length);
+}
+function rowFilled(i, scores = S.scores, n = cols()){
+  const r = scores[i]; if (!r) return false;
+  for (let c = 0; c < n; c++) if (r[c] !== '') return true;
+  return false;
+}
+function calc(scores, pens, hands, n){
+  const hs = [], ps = [], tot = [];
+  for (let c = 0; c < n; c++){
+    let h = 0;
+    for (let i = 0; i < hands; i++) h += num((scores[i]||[])[c]);
+    const p = (pens[c]||[]).reduce((a,b)=>a+b, 0);
+    hs.push(h); ps.push(p); tot.push(h + p);
+  }
+  return {hs, ps, tot};
+}
+function header(){
+  return `<header class="top"><h1>🃏 101 Okey Hesap</h1>
+    <div>
+      <button class="btn" onclick="goGame()">⚙ Oyun</button>
+      <button class="btn" onclick="renderHistory()">📜 Geçmiş${S.history.length?` (${S.history.length})`:''}</button>
+      <button class="btn danger" onclick="newGame()">Yeni Oyun</button>
+    </div></header>`;
+}
+function goGame(){ if (S.started) renderGame(); else renderSetup(); }
+
+/* ---------- SETUP ---------- */
+function renderSetup(){
+  const n = cols();
+  $('app').innerHTML = header() + `
+    <div class="card">
+      <h2>Oyun Ayarları</h2>
+      <div class="seg">
+        <button class="${S.mode==='single'?'on':''}" onclick="setMode('single')">Tekli</button>
+        <button class="${S.mode==='pair'?'on':''}" onclick="setMode('pair')">Eşli</button>
+      </div>
+      <div class="names">
+        ${names().slice(0,n).map((nm,i)=>`
+          <div><label>${S.mode==='pair'?'Takım':'Oyuncu'} ${i+1}</label>
+          <input type="text" value="${esc(nm)}" maxlength="24" oninput="names()[${i}]=this.value;save()"></div>`).join('')}
+      </div>
+      <div class="field">
+        <label>Oynanacak el sayısı</label>
+        <input type="number" id="setHands" min="1" max="99" value="${S.hands}">
+      </div>
+      <button class="btn primary" onclick="startGame()">${S.started?'Oyuna Dön':'Başla'}</button>
+    </div>`;
+}
+function setMode(m){
+  if (m === S.mode) return;
+  const apply = () => { S.mode = m; S.scores = []; S.pens = [[],[],[],[]]; ensure(); save(); renderSetup(); };
+  if (S.started && hasData()) ask('Mod değişirse mevcut (kaydedilmemiş) puanlar silinir. Devam edilsin mi?', 'Sıfırla ve değiştir', apply, true);
+  else apply();
+}
+function startGame(){
+  S.hands = Math.min(99, Math.max(1, num($('setHands').value) || 30));
+  names().forEach((n,i)=>{ if(!n.trim()) names()[i] = (S.mode==='pair'?'Takım ':'Oyuncu ') + (i+1); });
+  S.started = true; ensure(); save(); renderGame();
+}
+function newGame(){
+  const apply = () => { S.started = false; S.scores = []; S.pens = [[],[],[],[]]; save(); renderSetup(); };
+  if (hasData()) ask('Kaydedilmemiş puanlar silinecek ve yeni oyun başlayacak. Devam edilsin mi? (Önce "Oyunu Bitir ve Kaydet" ile geçmişe ekleyebilirsin.)', 'Yeni oyun', apply, true);
+  else apply();
+}
+
+/* ---------- GAME ---------- */
+function renderGame(){
+  ensure();
+  const n = cols(), nm = names();
+  let rows = '';
+  for (let i = 0; i < S.hands; i++){
+    rows += `<tr id="r-${i}" class="${rowFilled(i)?'done':''}"><td class="lbl">${i+1}. El</td>` +
+      Array.from({length:n}, (_,c)=>`<td><input type="number" step="1" id="s-${i}-${c}" value="${esc(S.scores[i][c])}"
+        oninput="setScore(${i},${c},this.value)" onkeydown="keyNav(event,${i},${c})"></td>`).join('') + '</tr>';
+  }
+  $('app').innerHTML = header() + `
+    <div class="sum c${n}" id="sum">
+      ${nm.slice(0,n).map((x,c)=>`<div class="sumcard" id="card-${c}"><div class="n">${esc(x)}</div><div class="t" id="top-${c}">0</div></div>`).join('')}
+    </div>
+
+    <div class="card info">
+      <div class="field"><label>Toplam el sayısı</label>
+        <input type="number" min="1" max="99" value="${S.hands}" onchange="setHands(this.value)"></div>
+      <div class="stat">Oynanan<b id="played">0</b></div>
+      <div class="stat">Kalan<b id="remain">0</b></div>
+    </div>
+
+    <div class="card">
+      <h2>Eller</h2>
+      <div class="tablewrap"><table>
+        <thead><tr><th style="width:80px"></th>${nm.slice(0,n).map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot>
+          <tr class="subtotal"><td class="lbl">El Toplamı</td>${Array.from({length:n},(_,c)=>`<td id="hs-${c}">0</td>`).join('')}</tr>
+        </tfoot>
+      </table></div>
+      <div class="hint">Eli bitiren için kutuya −101 (ya da −202) yaz. Enter ile alt satıra geçer.</div>
+    </div>
+
+    <div class="card">
+      <h2>Cezalar</h2>
+      <div class="pens ${n===2?'c2':'c4'}">
+        ${nm.slice(0,n).map((x,c)=>`
+          <div class="pen">
+            <h3>${esc(x)}</h3>
+            <button class="penbtn" onclick="addPen(${c})">101</button>
+            <div class="custom">
+              <input type="number" step="1" inputmode="numeric" id="pc-${c}" placeholder="Elle yaz (ör. 60)" onkeydown="if(event.key==='Enter')addCustomPen(${c})">
+              <button class="btn" onclick="addCustomPen(${c})">Ekle</button>
+            </div>
+            <div class="chips">
+              ${S.pens[c].map((v,k)=>`<span class="chip">${v}<button onclick="delPen(${c},${k})" title="Geri al">×</button></span>`).join('')}
+            </div>
+            <div class="pentotal">Ceza toplamı: <b id="ps-${c}">0</b></div>
+          </div>`).join('')}
+      </div>
+      <div class="hint">Butona basınca 101 ceza yazılır. 60, 70 gibi farklı cezaları kutuya yazıp Ekle'ye bas. Yanlış girdiysen × ile geri al.</div>
+    </div>
+
+    <div class="card">
+      <h2>Genel Toplam</h2>
+      <div class="tablewrap"><table>
+        <thead><tr>${nm.slice(0,n).map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead>
+        <tbody><tr class="grand">${Array.from({length:n},(_,c)=>`<td id="tot-${c}">0</td>`).join('')}</tr></tbody>
+      </table></div>
+      <div class="hint">En düşük puan önde (👑).</div>
+    </div>
+
+    <div class="card">
+      <button class="btn primary" onclick="saveGame()">✅ Oyunu Bitir ve Kaydet</button>
+      <div class="hint">Kaydedilen oyun Geçmiş'e eklenir ve sonradan düzenlenemez.</div>
+    </div>
+  `;
+  updateTotals();
+}
+
+function setScore(i, c, v){
+  S.scores[i][c] = v.trim();
+  save();
+  const r = $('r-'+i); if (r) r.classList.toggle('done', rowFilled(i));
+  updateTotals();
+}
+function keyNav(e, i, c){
+  if (e.key === 'Enter' || e.key === 'ArrowDown'){
+    const nx = $(`s-${i+1}-${c}`); if (nx){ e.preventDefault(); nx.focus(); nx.select(); }
+  } else if (e.key === 'ArrowUp'){
+    const pv = $(`s-${i-1}-${c}`); if (pv){ e.preventDefault(); pv.focus(); pv.select(); }
+  }
+}
+function setHands(v){
+  const nv = Math.min(99, Math.max(1, num(v) || S.hands));
+  const apply = () => { if (nv < S.scores.length) S.scores.length = nv; S.hands = nv; ensure(); save(); renderGame(); };
+  if (nv < S.hands && S.scores.slice(nv, S.hands).some(r => r.some(x => x !== ''))){
+    renderGame(); // vazgeçilirse eski sayı görünsün
+    ask('Kaldırılan ellerde yazılı puanlar var, silinsin mi?', 'Sil', apply, true);
+  } else apply();
+}
+function addPen(c){ S.pens[c].push(101); save(); renderGame(); }
+function addCustomPen(c){
+  const v = num($('pc-'+c).value);
+  if (!v) return;
+  S.pens[c].push(v); save(); renderGame();
+}
+function delPen(c, k){ S.pens[c].splice(k, 1); save(); renderGame(); }
+
+function updateTotals(){
+  const n = cols();
+  const {hs, ps, tot} = calc(S.scores, S.pens, S.hands, n);
+  let played = 0;
+  for (let i = 0; i < S.hands; i++) if (rowFilled(i)) played++;
+  for (let c = 0; c < n; c++){
+    $('hs-'+c).textContent = hs[c];
+    $('ps-'+c).textContent = ps[c];
+    $('tot-'+c).textContent = tot[c];
+    $('top-'+c).textContent = tot[c];
+  }
+  $('played').textContent = played;
+  $('remain').textContent = Math.max(0, S.hands - played);
+  const anyData = played > 0 || S.pens.slice(0,n).some(p => p.length);
+  const min = Math.min(...tot);
+  const allEq = tot.every(t => t === min);
+  for (let c = 0; c < n; c++)
+    $('card-'+c).classList.toggle('lead', anyData && !allEq && tot[c] === min);
+}
+
+/* ---------- KAYDET / GEÇMİŞ ---------- */
+function saveGame(){
+  if (!hasData()){ notice('Kaydedilecek puan yok.'); return; }
+  ask('Oyun geçmişe kaydedilecek. Kaydedildikten sonra düzenlenemez. Kaydedilsin mi?', 'Kaydet', doSave);
+}
+function doSave(){
+  const n = cols();
+  const scores = S.scores.slice(0, S.hands).map(r => r.slice(0, n));
+  const pens = S.pens.slice(0, n).map(p => p.slice());
+  let played = 0;
+  for (let i = 0; i < S.hands; i++) if (rowFilled(i)) played++;
+  const {tot} = calc(S.scores, S.pens, S.hands, n);
+  S.history.unshift({
+    id: Date.now(), date: new Date().toISOString(), mode: S.mode,
+    names: names().slice(0, n).slice(), hands: S.hands, played, scores, pens, tot
+  });
+  if (ghOn()) S.pendAdd.push(S.history[0]);
+  S.started = false; S.scores = []; S.pens = [[],[],[],[]];
+  save(); renderHistory();
+}
+function winnersText(g){
+  const min = Math.min(...g.tot);
+  if (g.tot.every(t => t === min)) return 'Berabere';
+  return g.names.filter((_, c) => g.tot[c] === min).join(' & ');
+}
+function renderHistory(noSync){
+  $('app').innerHTML = header() + `
+    <div class="card"><h2>Geçmiş Oyunlar</h2>
+    ${S.history.length ? '' : '<div class="empty">Henüz kaydedilmiş oyun yok.</div>'}
+    <button class="btn" onclick="exportHistory()">⬇ Yedek al</button>
+    <button class="btn" onclick="$('importFile').click()">⬆ Yedekten yükle</button>
+    <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importHistory(this)">
+    <div class="hint">Kayıtlar bu cihazın tarayıcısında durur. Ara sıra yedek alırsan telefon değiştirsen ya da tarayıcı verisi silinse bile kaybolmaz.</div>
+    </div>` + ghCard() + S.history.map((g, i) => `
+    <div class="card game">
+      <div>
+        <div class="meta">${esc(fmtDate(g.date))} <span class="badge">${g.mode==='pair'?'Eşli':'Tekli'}</span> <span class="badge">${g.played} el</span></div>
+        <div class="res">${g.names.map((x,c)=>`${esc(x)}: <b>${g.tot[c]}</b>`).join(' &nbsp;·&nbsp; ')}</div>
+        <div class="res">👑 ${esc(winnersText(g))}</div>
+      </div>
+      <div>
+        <button class="btn" onclick="renderView(${i})">Görüntüle</button>
+        <button class="btn danger" onclick="delGame(${i})">Sil</button>
+      </div>
+    </div>`).join('');
+  if (!noSync && ghOn()) ghSync().then(ok => { if (ok && $('ghStatus')) renderHistory(true); });
+}
+
+/* ---------- GitHub'a kayıt ---------- */
+let ghMsg = '', ghErr = '', ghBusy = false;
+const ghOn = () => !!(S.gh && S.gh.owner && S.gh.repo && S.gh.token);
+const GH_PATH = 'history.json';
+function setGh(msg){ ghMsg = msg; const el = $('ghStatus'); if (el) el.textContent = msg; }
+function ghHeaders(){
+  return {'Authorization':'Bearer ' + S.gh.token, 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28'};
+}
+function ghUrl(){ return `https://api.github.com/repos/${encodeURIComponent(S.gh.owner)}/${encodeURIComponent(S.gh.repo)}/contents/${GH_PATH}`; }
+function ghFail(status){
+  if (status === 401) return 'anahtar geçersiz ya da süresi dolmuş';
+  if (status === 403) return 'izin yok (anahtara Contents: Read and write verdin mi?)';
+  if (status === 404) return 'depo bulunamadı ya da anahtarın bu depoya erişimi yok';
+  return 'GitHub hatası (' + status + ')';
+}
+async function ghGet(){
+  let r;
+  try { r = await fetch(ghUrl() + '?ts=' + Date.now(), {headers: ghHeaders(), cache:'no-store'}); }
+  catch(e){ throw new Error('bağlantı yok'); }
+  if (r.status === 404) return {sha:null, history:[]};
+  if (!r.ok) throw new Error(ghFail(r.status));
+  const j = await r.json();
+  let history = [];
+  try {
+    const txt = decodeURIComponent(escape(atob(String(j.content).replace(/\n/g, ''))));
+    const d = JSON.parse(txt);
+    if (d && Array.isArray(d.history)) history = d.history;
+  } catch(e){}
+  return {sha:j.sha, history};
+}
+async function ghUpdate(mutator){
+  for (let t = 0; t < 3; t++){
+    const {sha, history} = await ghGet();
+    const nh = mutator(history);
+    if (JSON.stringify(nh) === JSON.stringify(history) && (sha || nh.length === 0)) return nh;
+    const body = {message:'okey101 kayıt', content: btoa(unescape(encodeURIComponent(JSON.stringify({app:'okey101', history:nh}, null, 1))))};
+    if (sha) body.sha = sha;
+    let r;
+    try { r = await fetch(ghUrl(), {method:'PUT', headers:Object.assign({'Content-Type':'application/json'}, ghHeaders()), body:JSON.stringify(body)}); }
+    catch(e){ throw new Error('bağlantı yok'); }
+    if (r.status === 409) continue; // başka cihaz araya girdi, tekrar dene
+    if (!r.ok) throw new Error(ghFail(r.status));
+    return nh;
+  }
+  throw new Error('kayıt çakıştı, tekrar dene');
+}
+async function ghSync(){
+  if (!ghOn() || ghBusy) return false;
+  ghBusy = true; setGh('eşitleniyor…');
+  try {
+    const add = S.pendAdd.slice(), del = new Set(S.pendDel);
+    const merged = await ghUpdate(h => {
+      const out = h.filter(x => !del.has(x.id));
+      add.forEach(g => { if (!del.has(g.id) && !out.some(x => x.id === g.id)) out.push(g); });
+      out.sort((a, b) => b.id - a.id);
+      return out;
+    });
+    S.history = merged;
+    S.pendAdd = S.pendAdd.filter(g => !add.some(a => a.id === g.id));
+    S.pendDel = S.pendDel.filter(id => !del.has(id));
+    save(); setGh('güncel ✓');
+    return true;
+  } catch(e){
+    ghErr = e.message; setGh('hata: ' + e.message);
+    return false;
+  } finally { ghBusy = false; }
+}
+function ghCard(){
+  if (ghOn()){
+    const pend = S.pendAdd.length + S.pendDel.length;
+    return `<div class="card"><h2>☁ GitHub'a Kayıt</h2>
+      <div class="hint" style="margin:0 0 10px">Bağlı: <b>${esc(S.gh.owner)}/${esc(S.gh.repo)}</b> · <span id="ghStatus">${esc(ghMsg || (pend ? 'gönderilmeyi bekleyen kayıt var' : 'hazır'))}</span></div>
+      <button class="btn" onclick="ghSyncNow()">🔄 Şimdi eşitle</button>
+      <button class="btn danger" onclick="ghDisconnect()">Bağlantıyı kaldır</button>
+    </div>`;
+  }
+  return `<div class="card"><h2>☁ GitHub'a Kaydet</h2>
+    <div class="hint" style="margin:0 0 10px">Bağlarsan biten oyunlar telefonda değil GitHub'daki depona (history.json) yazılır. Aynı bilgileri başka cihaza da girersen orada da görünür.</div>
+    <div class="names">
+      <div><label>GitHub kullanıcı adın</label><input type="text" id="gh-owner" autocapitalize="off" autocomplete="off"></div>
+      <div><label>Depo adı</label><input type="text" id="gh-repo" value="okey101" autocapitalize="off" autocomplete="off"></div>
+      <div><label>Erişim anahtarı (token)</label><input type="password" id="gh-token" autocomplete="off"></div>
+    </div>
+    <button class="btn primary" onclick="ghConnect()">Bağlan</button>
+    <div class="hint">Anahtarı şöyle oluştur: GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token. "Only select repositories" ile sadece bu depoyu seç, Repository permissions'da <b>Contents: Read and write</b> ver. Anahtar yalnızca bu cihazın tarayıcısında durur. Depo herkese açıksa history.json'u ve içindeki isimleri linki bilen herkes görebilir.</div>
+  </div>`;
+}
+async function ghConnect(){
+  const owner = $('gh-owner').value.trim(), repo = $('gh-repo').value.trim(), token = $('gh-token').value.trim();
+  if (!owner || !repo || !token){ notice('Üç alanı da doldur.'); return; }
+  S.gh = {owner, repo, token};
+  S.pendAdd = S.history.slice(); S.pendDel = [];
+  const ok = await ghSync();
+  if (!ok){
+    S.gh = null; S.pendAdd = []; S.pendDel = []; save();
+    renderHistory(true); notice('Bağlanılamadı: ' + ghErr);
+    return;
+  }
+  save(); renderHistory(true); notice('Bağlandı. Biten oyunlar artık GitHub\'a da yazılacak.');
+}
+function ghSyncNow(){ ghSync().then(() => renderHistory(true)); }
+function ghDisconnect(){
+  ask('GitHub bağlantısı bu cihazdan kaldırılacak. Depodaki kayıtlar ve bu cihazdaki kayıtlar silinmez.', 'Kaldır', () => {
+    S.gh = null; S.pendAdd = []; S.pendDel = []; save(); renderHistory(true);
+  }, true);
+}
+
+async function exportHistory(){
+  if (!S.history.length){ notice('Yedeklenecek kayıt yok.'); return; }
+  const text = JSON.stringify({app:'okey101', history:S.history}, null, 1);
+  const fname = 'okey101-yedek-' + new Date().toISOString().slice(0,10) + '.json';
+  try {
+    const file = new File([text], fname, {type:'application/json'});
+    if (navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:'101 Okey yedek'});
+      return;
+    }
+  } catch(e){ if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], {type:'application/json'}));
+  a.download = fname; document.body.appendChild(a); a.click(); a.remove();
+}
+function importHistory(inp){
+  const f = inp.files && inp.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const d = JSON.parse(rd.result);
+      if (!d || !Array.isArray(d.history)) throw 0;
+      const have = new Set(S.history.map(g => g.id));
+      let added = 0;
+      d.history.forEach(g => { if (g && g.id && Array.isArray(g.names) && !have.has(g.id)){ S.history.push(g); if (ghOn()) S.pendAdd.push(g); added++; } });
+      S.history.sort((a,b) => b.id - a.id);
+      save(); renderHistory(); notice(added + ' oyun yüklendi.');
+    } catch(e){ notice('Bu dosya geçerli bir yedek değil.'); }
+  };
+  rd.readAsText(f);
+}
+function delGame(i){
+  ask('Bu kayıt tamamen silinecek. Emin misin?', 'Sil', () => {
+    const id = S.history[i].id;
+    S.history.splice(i, 1);
+    if (ghOn()){ S.pendDel.push(id); S.pendAdd = S.pendAdd.filter(x => x.id !== id); }
+    save(); renderHistory();
+  }, true);
+}
+function renderView(i){
+  const g = S.history[i]; if (!g) return renderHistory();
+  const n = g.names.length;
+  const {hs, ps, tot} = calc(g.scores, g.pens, g.hands, n);
+  const min = Math.min(...tot), allEq = tot.every(t => t === min);
+  let rows = '';
+  for (let k = 0; k < g.hands; k++){
+    if (!rowFilled(k, g.scores, n)) continue;
+    rows += `<tr><td class="lbl">${k+1}. El</td>${Array.from({length:n},(_,c)=>`<td class="ro">${esc(g.scores[k][c] === '' ? '–' : g.scores[k][c])}</td>`).join('')}</tr>`;
+  }
+  $('app').innerHTML = header() + `
+    <div class="card">
+      <button class="btn" onclick="renderHistory()">← Geçmişe dön</button>
+      <h2 style="margin-top:12px">${esc(fmtDate(g.date))} <span class="badge">${g.mode==='pair'?'Eşli':'Tekli'}</span> <span class="badge">🔒 Salt okunur</span></h2>
+    </div>
+    <div class="sum c${n}">
+      ${g.names.map((x,c)=>`<div class="sumcard ${!allEq && tot[c]===min?'lead':''}"><div class="n">${esc(x)}</div><div class="t">${tot[c]}</div></div>`).join('')}
+    </div>
+    <div class="card">
+      <h2>Eller</h2>
+      <div class="tablewrap"><table>
+        <thead><tr><th style="width:80px"></th>${g.names.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead>
+        <tbody>${rows || `<tr><td colspan="${n+1}" class="empty">El girilmemiş</td></tr>`}</tbody>
+        <tfoot><tr class="subtotal"><td class="lbl">El Toplamı</td>${hs.map(v=>`<td>${v}</td>`).join('')}</tr></tfoot>
+      </table></div>
+    </div>
+    <div class="card">
+      <h2>Cezalar</h2>
+      <div class="pens ${n===2?'c2':'c4'}">
+        ${g.names.map((x,c)=>`<div class="pen"><h3>${esc(x)}</h3>
+          <div class="chips">${g.pens[c].length ? g.pens[c].map(v=>`<span class="chip ro">${v}</span>`).join('') : '<span class="hint">Ceza yok</span>'}</div>
+          <div class="pentotal">Ceza toplamı: <b>${ps[c]}</b></div></div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <h2>Genel Toplam</h2>
+      <div class="tablewrap"><table>
+        <thead><tr>${g.names.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead>
+        <tbody><tr class="grand">${tot.map(v=>`<td>${v}</td>`).join('')}</tr></tbody>
+      </table></div>
+    </div>`;
+}
+
+/* ---------- INIT ---------- */
+if (S.started) renderGame(); else renderSetup();
+</script>
+</body>
+</html>
